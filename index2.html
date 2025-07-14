@@ -1,0 +1,79 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      background: transparent;
+      margin: 0;
+      overflow: hidden;
+      color: #000D52;
+      font-family: monospace;
+      font-size: 1.3vw;
+      line-height: 1.1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    pre {
+      white-space: pre;
+    }
+  </style>
+</head>
+<body>
+  <pre id="ascii"></pre>
+  <script>
+    const ascii = document.getElementById("ascii");
+    const chars = "@#*+=-:. "; // inverted density
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = "cell-bg.png";
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    function draw(swirl=false) {
+      canvas.width = 160;
+      canvas.height = 80;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      let output = "";
+      const t = Date.now() * 0.002;
+
+      for (let y = 0; y < canvas.height; y++) {
+        for (let x = 0; x < canvas.width; x++) {
+          let dx = x, dy = y;
+          if (swirl) {
+            const angle = Math.sin((x + t) * 0.05) + Math.cos((y + t) * 0.05);
+            dx += Math.sin(t + y * 0.1) * 2;
+            dy += Math.cos(t + x * 0.1) * 2;
+          } else {
+            dx += Math.sin(t + y * 0.1) * 1.5;
+          }
+
+          const px = (Math.floor(dy) * canvas.width + Math.floor(dx)) * 4;
+          const alpha = pixels[px + 3];
+          if (alpha < 50) {
+            output += " ";
+            continue;
+          }
+          const r = pixels[px];
+          const g = pixels[px + 1];
+          const b = pixels[px + 2];
+          const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+          const charIndex = Math.floor((1 - brightness) * (chars.length - 1));
+          output += chars[charIndex];
+        }
+        output += "\n";
+      }
+      ascii.textContent = output;
+      requestAnimationFrame(() => draw(swirl));
+    }
+
+    img.onload = () => draw(true);
+  </script>
+</body>
+</html>
