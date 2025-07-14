@@ -1,15 +1,15 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Live Swirling Shader</title>
+  <title>Pixel Grid Swirl Shader</title>
   <style>
     body { margin: 0; background: black; overflow: hidden; }
     canvas { display: block; }
   </style>
 </head>
 <body>
-  <!-- Load Three.js -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 
   <!-- Vertex Shader -->
@@ -28,31 +28,40 @@
     uniform float u_time;
     varying vec2 vUv;
 
-    float noise(vec2 p) {
-      return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+    float hash(vec2 p) {
+      return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453123);
     }
 
-    float fbm(vec2 p) {
-      float value = 0.0;
-      float amplitude = 0.5;
-      for (int i = 0; i < 5; i++) {
-        value += amplitude * noise(p);
-        p *= 2.0;
-        amplitude *= 0.5;
-      }
-      return value;
+    float noise(vec2 p) {
+      vec2 i = floor(p);
+      vec2 f = fract(p);
+      float a = hash(i);
+      float b = hash(i + vec2(1.0, 0.0));
+      float c = hash(i + vec2(0.0, 1.0));
+      float d = hash(i + vec2(1.0, 1.0));
+      vec2 u = f * f * (3.0 - 2.0 * f);
+      return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
     }
 
     void main() {
       vec2 uv = vUv;
-      float angle = fbm(uv * 3.0 + u_time * 0.2) * 6.2831;
+
+      float pixelSize = 0.015;
+      uv = floor(uv / pixelSize) * pixelSize;
+
+      float n = noise(uv * 10.0 + u_time * 0.5);
+      float angle = n * 6.2831;
       vec2 offset = 0.01 * vec2(cos(angle), sin(angle));
+
       vec4 color = texture2D(u_texture, uv + offset);
-      gl_FragColor = color;
+
+      float ascii = floor((color.r + color.g + color.b) * 4.0);
+      color.rgb = vec3(ascii / 4.0);
+
+      gl_FragColor = vec4(color.rgb, 1.0);
     }
   </script>
 
-  <!-- WebGL Setup Script -->
   <script>
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
