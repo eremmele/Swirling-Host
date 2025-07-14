@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Dynamic ASCII</title>
+<title>ASCII Swirl</title>
 <style>
   body {
     background: transparent;
@@ -66,7 +66,7 @@
                             &&&&&&  &&   &&&&&  &&&&&&&&&&&&&&&&&&&&                                                  &&&&&&&&&&&&&&&&                          
                                                                                                                        &&&&&&&&&&&                              </pre>
 <script>
-  const original = `                                                                                      $&       &&& & &&&&           &&&&$&&&&&&$&&&&&&                          
+  const base = `                                                                                      $&       &&& & &&&&           &&&&$&&&&&&$&&&&&&                          
                                                                             &&&&        &$ &&& &         & &&$&&&&&$ & $ & &&$ & $ & & & &                      
                               $&   && &                                     &&$&$&&&    &&    & & &&&      &&&&&& & &&&&&&&&&&&&&&$&&&&&$&&&&&                  
                           && &&& & &   &                                     &    &&     &          &&&&   & &&&&&&&&&&&&&&&&&&&&&$&&&&&&& $ &&&                
@@ -108,21 +108,30 @@
                     && &&&     &$&& $&& &$&&&&&&&&&&&&&&&&$&&&&$&&&&&&& &                                             &&&  $&&&& &&&&&&&&                       
                             &&&&&&& &&& &$&&&& &&&&&&&&&&&&&&&&&&&&&                                                  &&&&&&&&&&&&&&&&                          
                                                                                                                        &&&&&&&&&&$                              `;
-  const chars = "@#&$%Xx+;:,. ".split('');
+  const lines = base.trim().split("\n").map(line => line.split(''));
+  const height = lines.length;
+  const width = lines[0].length;
   const pre = document.getElementById("ascii");
+  let t = 0;
 
-  function shuffleText() {
-    let lines = original.trim().split("\n");
-    let newLines = lines.map(line =>
-      line.split('').map(char => {
-        if (char === ' ') return ' ';
-        return Math.random() < 0.05 ? chars[Math.floor(Math.random() * chars.length)] : char;
-      }).join('')
-    );
-    pre.textContent = newLines.join("\n");
+  function swirl() {
+    let output = [];
+    for (let y = 0; y < height; y++) {
+      let row = '';
+      for (let x = 0; x < width; x++) {
+        let dx = Math.floor(2 * Math.sin((y + t) * 0.1));
+        let dy = Math.floor(2 * Math.cos((x + t) * 0.1));
+        let nx = (x + dx + width) % width;
+        let ny = (y + dy + height) % height;
+        row += lines[ny][nx] === ' ' ? ' ' : lines[ny][nx];
+      }
+      output.push(row);
+    }
+    pre.textContent = output.join("\n");
+    t++;
   }
 
-  setInterval(shuffleText, 100);
+  setInterval(swirl, 75);
 </script>
 </body>
 </html>
