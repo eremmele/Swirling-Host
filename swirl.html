@@ -20,9 +20,20 @@
       white-space: pre;
       line-height: 1;
     }
+    .fade-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      pointer-events: none;
+      background: linear-gradient(to bottom, black 0%, transparent 15%, transparent 85%, black 100%);
+      z-index: 1;
+    }
   </style>
 </head>
 <body>
+  <div class="fade-overlay"></div>
   <pre id="ascii"></pre>
   <script>
     const ascii = document.getElementById("ascii");
