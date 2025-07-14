@@ -2,89 +2,72 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>ASCII Shader Grid</title>
+  <title>Live ASCII Grid</title>
   <style>
-    body { margin: 0; background: black; overflow: hidden; }
-    canvas { display: block; }
+    body {
+      margin: 0;
+      background: black;
+      color: white;
+      font-family: monospace;
+      font-size: 8px;
+      line-height: 8px;
+      white-space: pre;
+      overflow: hidden;
+    }
+    #ascii {
+      user-select: none;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
-
-  <script id="vertexShader" type="x-shader/x-vertex">
-    varying vec2 vUv;
-    void main() {
-      vUv = uv;
-      gl_Position = vec4(position, 1.0);
-    }
-  </script>
-
-  <script id="fragmentShader" type="x-shader/x-fragment">
-    precision highp float;
-    uniform sampler2D u_texture;
-    uniform sampler2D u_atlas;
-    uniform float u_time;
-    varying vec2 vUv;
-
-    float getBrightness(vec3 color) {
-      return dot(color, vec3(0.299, 0.587, 0.114));
-    }
-
-    void main() {
-      vec2 uv = vUv;
-
-      float gridSize = 0.015;
-      vec2 gridUV = floor(uv / gridSize) * gridSize;
-      vec3 texColor = texture2D(u_texture, gridUV).rgb;
-
-      float brightness = getBrightness(texColor);
-      float index = floor(brightness * 9.99);
-      float glyphCount = 10.0;
-
-      vec2 glyphUV = fract(uv / gridSize);
-      glyphUV.x = (glyphUV.x + index) / glyphCount;
-
-      vec4 glyph = texture2D(u_atlas, glyphUV);
-      gl_FragColor = vec4(glyph.rgb, 1.0);
-    }
-  </script>
-
+  <pre id="ascii"></pre>
+  <canvas id="source" width="200" height="100" style="display: none;"></canvas>
   <script>
-    const scene = new THREE.Scene();
-    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
-    camera.position.z = 1;
+    const chars = "@#XOxo+:-. ";
+    const ascii = document.getElementById("ascii");
+    const canvas = document.getElementById("source");
+    const ctx = canvas.getContext("2d");
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+    const img = new Image();
+    img.src = "cell-bg.png";
 
-    const textureLoader = new THREE.TextureLoader();
-    const mainTexture = textureLoader.load("cell-bg.png");
-    const atlasTexture = textureLoader.load("ascii-atlas.png");
-
-    const uniforms = {
-      u_time: { value: 0.0 },
-      u_texture: { value: mainTexture },
-      u_atlas: { value: atlasTexture }
-    };
-
-    const material = new THREE.ShaderMaterial({
-      uniforms,
-      vertexShader: document.getElementById("vertexShader").textContent,
-      fragmentShader: document.getElementById("fragmentShader").textContent
-    });
-
-    const geometry = new THREE.PlaneGeometry(2, 2);
-    const mesh = new THREE.Mesh(geometry, material);
-    scene.add(mesh);
-
-    function animate() {
-      uniforms.u_time.value = performance.now() * 0.001;
-      renderer.render(scene, camera);
-      requestAnimationFrame(animate);
+    function getChar(brightness) {
+      const idx = Math.floor(brightness / 255 * (chars.length - 1));
+      return chars[idx];
     }
 
-    animate();
+    img.onload = function () {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      let frame = 0;
+
+      function render() {
+        frame++;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+        let asciiImage = "";
+        for (let y = 0; y < canvas.height; y++) {
+          for (let x = 0; x < canvas.width; x++) {
+            const i = (y * canvas.width + x) * 4;
+            const r = imageData[i];
+            const g = imageData[i + 1];
+            const b = imageData[i + 2];
+            const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+
+            // Animate via sine wave
+            const wave = Math.sin((x + frame * 0.5) * 0.1 + y * 0.1) * 50;
+            const char = getChar(brightness + wave);
+            asciiImage += char;
+          }
+          asciiImage += "\n";
+        }
+        ascii.textContent = asciiImage;
+        requestAnimationFrame(render);
+      }
+
+      render();
+    };
   </script>
 </body>
 </html>
