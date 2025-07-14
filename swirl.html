@@ -65,7 +65,7 @@
           const b = pixels[px + 2];
           const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
           const charIndex = Math.floor((1 - brightness) * (chars.length - 1));
-          output += chars[charIndex];
+          output += chars[Math.max(0, Math.min(chars.length - 1, charIndex))];
         }
         output += "\n";
       }
