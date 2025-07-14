@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Live ASCII Grid</title>
+  <title>Finessed ASCII</title>
   <style>
     body {
       margin: 0;
@@ -39,25 +39,24 @@
 
     img.onload = function () {
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const baseData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
       let frame = 0;
 
       function render() {
         frame++;
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-
         let asciiImage = "";
         for (let y = 0; y < canvas.height; y++) {
           for (let x = 0; x < canvas.width; x++) {
             const i = (y * canvas.width + x) * 4;
-            const r = imageData[i];
-            const g = imageData[i + 1];
-            const b = imageData[i + 2];
+            const r = baseData[i];
+            const g = baseData[i + 1];
+            const b = baseData[i + 2];
             const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
 
-            // Animate via sine wave
-            const wave = Math.sin((x + frame * 0.5) * 0.1 + y * 0.1) * 50;
-            const char = getChar(brightness + wave);
+            // Animate upward using sine wave
+            const wave = Math.sin((y - frame * 0.7) * 0.1 + x * 0.05) * 50;
+            const char = getChar(Math.max(0, Math.min(255, brightness + wave)));
             asciiImage += char;
           }
           asciiImage += "\n";
