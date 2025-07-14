@@ -9,6 +9,7 @@
   </style>
 </head>
 <body>
+  <!-- Load Three.js -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 
   <!-- Vertex Shader -->
@@ -51,6 +52,7 @@
     }
   </script>
 
+  <!-- WebGL Setup Script -->
   <script>
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
